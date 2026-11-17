@@ -1,0 +1,25 @@
+network:
+  N: 400
+  max_sweeps: 50
+
+experiment:
+  # Memory loads P/N
+  memory_loads: [0.02, 0.05, 0.08, 0.10, 0.12, 0.14, 0.16, 0.18]
+  # Corresponding P values when N=400: [8, 20, 32, 40, 48, 56, 64, 72]
+  
+  # Fractions of undirected off-diagonal synapses removed
+  lesion_fractions: [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50]
+  
+  # Independent bit-flip noise probabilities on the target cue
+  cue_noise_levels: [0.05, 0.10, 0.20, 0.30]
+  
+  # Independent network/lesion configuration replicates
+  num_replicates: 30
+  
+  # Primary random seed for reproducibility
+  base_seed: 42
+
+paths:
+  raw_results: "results/raw"
+  processed_results: "results/processed"
+  figures: "results/figures"
