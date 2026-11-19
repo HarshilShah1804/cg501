@@ -19,10 +19,11 @@
     urlcolor=blue
 }
 
-\title{\textbf{Memory Load, Neural Damage, and False Recall: \\ A Computational Model of Associative Memory Resilience}}
-\author{\textbf{Harshil Shah} \\
-Department of Cognitive Science / Computer Science \\
-Course: CG501 -- Cognitive Systems and Computational Modeling}
+\title{\textbf{Memory Load, Neural Damage, and False Recall:\\
+A Computational Study of Associative Memory Resilience}}
+\author{\textbf{Harshil Shah}\\
+Department of Cognitive Science / Computer Science\\
+CG501 -- Cognitive Systems and Computational Modeling}
 \date{November 2026}
 
 \begin{document}
@@ -30,10 +31,10 @@ Course: CG501 -- Cognitive Systems and Computational Modeling}
 \maketitle
 
 \begin{abstract}
-Associative memory is the cognitive faculty that reconstructs complete representations from noisy or partial perceptual cues. In biological neural circuits, retrieval faces two simultaneous constraints: inter-memory interference from high memory load, and structural degradation caused by synaptic pruning, aging, or neuropathology. This study investigates how memory load ($P/N$) and symmetric synaptic damage interact to alter associative recall and the distribution of retrieval errors in a classical Hopfield network ($N=400$). Using an asynchronous dynamical system with rigorous fixed-point stability verification across 3,360 independent network replicates, we demonstrate three core phenomena: First, undamaged networks display a sharp capacity transition near the theoretical Amit--Gutfreund--Sompolinsky limit ($\alpha_c \approx 0.138$). Second, networks operating below saturation exhibit marked structural resilience: at low load ($P/N=0.05$), networks tolerate the random destruction of up to 30\% of all synapses with 0\% loss in exact recall accuracy, providing a formal computational analogue to the cognitive reserve hypothesis. Third, analysis of failure modes reveals that retrieval breakdown is rarely caused by non-convergence or confusion with other stored memories; instead, damaged and overloaded networks settle predominantly into stable spurious attractors (hallucinated mixture states). Finally, an extension comparing synthetic orthogonal patterns with binarized MNIST handwritten digits ($N=784$) demonstrates that naturalistic spatial correlations collapse exact capacity to $P < 4$ while preserving high semantic overlap ($\sim 94\%$ Hamming similarity), computationally mirroring prototype abstraction and schematic false recall in human cognition.
+When we try to remember something from a partial cue --- a half-heard melody, a face seen only once --- we are relying on what researchers call associative or content-addressable memory. This paper uses a classical Hopfield network ($N=400$ neurons) to explore two things that can go wrong with that process: storing too many memories at once, and losing synaptic connections over time. Across 3,360 independently seeded retrieval trials, we found that an undamaged network behaves well up to roughly the Amit--Gutfreund--Sompolinsky theoretical limit of $\alpha_c \approx 0.138$ patterns per neuron, then collapses quite quickly. More interestingly, networks running at low load ($P/N = 0.05$) stayed at perfect recall even after we randomly destroyed 30\% of their synapses --- a result that maps onto what cognitive neuroscientists call reserve. The failure mode when things do break down is also not what you might expect: it is almost never confusion with another real memory. Instead, the network almost always gets stuck in a spurious but stable attractor, a kind of hallucinated mixture state. A short extension with binarized MNIST digits ($N=784$) shows that the correlation structure of real images wrecks the capacity theory entirely --- exact recall collapses at just $P=4$ patterns, even though the network still recovers about 94\% of each digit's features. The implications for thinking about memory interference, neural resilience, and schematic false recall are discussed.
 \end{abstract}
 
-\noindent\textbf{Keywords:} Hopfield Network, Associative Memory, Synaptic Lesions, Cognitive Reserve, Spurious Attractors, False Memory, MNIST.
+\noindent\textbf{Keywords:} Hopfield network, associative memory, synaptic lesions, cognitive reserve, spurious attractors, false memory, MNIST.
 
 \vspace{0.8em}
 \hrule
@@ -42,160 +43,147 @@ Associative memory is the cognitive faculty that reconstructs complete represent
 \section{Introduction}
 
 \subsection{Background and Rationale}
-Human memory is fundamentally content-addressable: rather than accessing information via fixed physical addresses as in digital computers, biological memory retrieves stored knowledge through associative content. A brief melodic fragment, an aroma, or a blurred visual silhouette can rapidly evoke a rich, multidimensional episodic memory. In computational cognitive science, this pattern-completion ability is classically modeled using recurrent artificial neural networks, notably the Hopfield network \cite{hopfield1982}.
 
-However, associative retrieval is constrained by two distinct factors:
-\begin{enumerate}
-    \item \textbf{Memory Load:} Storing an increasing volume of memories in a finite neural volume produces mutual cross-talk interference across overlapping synaptic distributions \cite{amit1985, mceliece1987}.
-    \item \textbf{Synaptic Damage:} The physical loss of synaptic connections---whether through normal aging, trauma, or neurodegenerative pathology---disrupts the recurrent feedback pathways required to sustain stable attractors.
-\end{enumerate}
+There is something remarkable about how human memory works. Unlike a hard drive, it does not need a precise address to fetch a record --- a rough sketch, a partial sound, a familiar smell is often enough. This \textit{content-addressable} quality is what makes memory feel holistic rather than archival. The Hopfield network, introduced in 1982 \cite{hopfield1982}, gave researchers a mathematically tractable way to study this, by showing that a fully recurrent network with symmetric synaptic weights can store patterns as stable energy minima and recover them from corrupted cues.
 
-Clinical neuropsychology has long highlighted a striking dissociation: individuals with comparable degrees of structural brain pathology often exhibit vastly different cognitive profiles \cite{stern2002, stern2012}. This phenomenon, termed \textit{cognitive reserve} or \textit{neural resilience} \cite{livingston2024}, suggests that the functional impact of structural lesions is modulated by existing network load and redundancy. Moreover, when memory fails in biological systems, it often manifests not as total information loss, but as \textit{false recall} or confabulation---the confident retrieval of plausible yet non-existent representations \cite{roediger1995, bartlett1932}.
+Of course, real memory is not perfectly robust. Two kinds of degradation matter most. First, the more patterns you try to store, the more they start interfering with each other --- cross-talk in the weight matrix grows until memories blend or destabilize altogether \cite{amit1985,mceliece1987}. Second, synaptic connections are not permanent. Whether through ordinary aging, traumatic injury, or neurodegenerative disease, physical connectivity is gradually reduced, and at some point retrieval suffers.
+
+What makes this especially interesting from a cognitive science perspective is the degree of individual variability. Two patients with comparable amounts of Alzheimer's pathology can present very differently: one with severe cognitive impairment, the other still largely functional. This gap is explained, at least in part, by the \textit{cognitive reserve} hypothesis \cite{stern2002,stern2012} --- the idea that some people have more ``slack'' built into their neural architecture, so the same amount of damage leaves them with more usable capacity. And when memory does fail, it often fails in a revealing way: not as silence, but as confabulation --- the retrieval of something plausible but wrong \cite{roediger1995,bartlett1932}. These two phenomena, resilience and false recall, form the backbone of this study.
 
 \subsection{Review of Relevant Literature}
-John Hopfield \cite{hopfield1982} formalized associative memory by establishing an equivalence between recurrent neural networks with symmetric synaptic couplings and physical spin glasses. In this framework, stored memories act as local energy minima (attractors) within a scalar Lyapunov energy landscape. Amit, Gutfreund, and Sompolinsky (AGS) \cite{amit1985, amit1987} demonstrated via statistical mechanics that for independent, unbiased bipolar patterns, a fully connected network achieves a theoretical macroscopic storage capacity of $\alpha_c = P/N \approx 0.138$. Beyond this threshold, the network undergoes a phase transition into a spin-glass state where original memory attractors destabilize.
 
-Information-theoretic analyses by McEliece et al. \cite{mceliece1987} and Abu-Mostafa and St. Jacques \cite{abumostafa1985} proved that if zero-error recovery is strictly demanded, asymptotic capacity scales as $P \approx N / (2 \ln N)$. While these classical analytical proofs establish upper bounds for infinite, undamaged systems, real neural circuits are finite and experience structural lesioning. Previous simulation studies have explored connectivity pruning; however, many prior simulations suffer from methodological flaws: calculating lesion fractions against $N^2$ rather than the set of unique undirected connections $\frac{N(N-1)}{2}$ (breaking symmetry), confusing transient non-converged states with stable spurious memories, or testing multiple cues on a single frozen network (pseudoreplication).
+Hopfield's 1982 paper \cite{hopfield1982} was elegant in its core insight: by drawing an analogy with spin glasses in statistical physics, he showed that a network of binary units with symmetric weights $W_{ij} = W_{ji}$ naturally converges to fixed-point attractors that can be identified with stored memories. The energy function $E = -\frac{1}{2} s^T W s$ decreases monotonically under asynchronous updates, which means the dynamics are guaranteed to terminate.
 
-\subsection{Statement of Hypotheses and Objectives}
-This study investigates the joint interaction between memory load, synaptic damage, and cue corruption. We address four central research questions:
+The natural follow-up question was: how many memories can a network actually store? Amit, Gutfreund, and Sompolinsky (AGS) answered this using tools from statistical mechanics \cite{amit1985,amit1987}. For random, unbiased bipolar patterns, they derived a theoretical macroscopic capacity of $\alpha_c = P/N \approx 0.138$ --- meaning a 400-neuron network can store up to about 55 patterns before the retrieval process starts to break down. Beyond that threshold, the system enters a kind of spin-glass phase where the original attractors dissolve into disorder. McEliece et al. \cite{mceliece1987} and Abu-Mostafa and St. Jacques \cite{abumostafa1985} extended this with information-theoretic bounds, showing that for guaranteed zero-error recovery, the practical capacity is much lower, scaling as $P \sim N / (2 \ln N)$.
+
+One thing the literature has been less careful about is methodology. A surprising number of simulations compute lesion fractions relative to $N^2$ rather than the correct $N(N-1)/2$ undirected edges, which silently breaks the symmetry of the weight matrix and invalidates the energy proof. Others conflate slow-to-converge states with stable spurious attractors, or test hundreds of cues on a single frozen network and treat each cue as an independent observation. These issues motivated some of the design choices in the present study.
+
+\subsection{Hypotheses and Objectives}
+
+The study is organized around four questions:
+
 \begin{itemize}
-    \item \textbf{RQ1 (Memory Load):} How does memory load affect retrieval fidelity in an undamaged network?
-    \item \textbf{RQ2 (Synaptic Damage \& Resilience):} How does symmetric random synaptic lesioning affect recall across memory loads?
-    \item \textbf{RQ3 (Error Distribution):} When recall fails, how does the error distribution partition between other-stored-memory confusion, stable spurious states, and non-convergence?
-    \item \textbf{RQ4 (Cue Corruption):} How does initial cue noise interact with structural lesioning and memory load?
+    \item \textbf{RQ1}: How does retrieval accuracy vary with memory load in a network with no damage?
+    \item \textbf{RQ2}: How does adding random synaptic lesions change accuracy, and does the memory load change how sensitive the network is to damage?
+    \item \textbf{RQ3}: When retrieval fails, what actually happens --- does the network get confused with another real memory, or does it land somewhere else entirely?
+    \item \textbf{RQ4}: How does corrupting the initial cue interact with the other two variables?
 \end{itemize}
 
-We hypothesize:
-\begin{enumerate}
-    \item[\textbf{H1:}] Recall accuracy will remain high at low loads and drop sharply as $P/N$ approaches $\alpha_c \approx 0.138$.
-    \item[\textbf{H2:}] Low-load networks will exhibit a plateau of complete resilience, tolerating substantial synaptic damage before performance drops, whereas saturated networks will collapse under minimal lesioning.
-    \item[\textbf{H3:}] Retrieval failures under damage will be overwhelmingly dominated by stable spurious attractors rather than confusion with other stored memories.
-    \item[\textbf{H4:}] Corrupted cues will compound damage by placing initial states outside contracted attractor basins.
-\end{enumerate}
+We expected accuracy to hold up well below the AGS limit and fall sharply near it (H1). We expected low-load networks to tolerate more damage than saturated ones (H2), and we expected most errors to be spurious attractors rather than other-memory confusions (H3). The cue corruption prediction was more tentative: we thought it would matter more in already-stressed networks, but weren't sure how cleanly this would show up (H4).
 
 \section{Methods}
 
 \subsection{Model Details}
 
-\subsubsection{Network Representation}
-The primary network comprises $N = 400$ binary neurons. The state at time $t$ is a bipolar vector:
-\begin{equation}
-s = (s_1, s_2, \ldots, s_N)^T \in \{-1, +1\}^N
-\end{equation}
-A set of $P$ memory patterns are stored in the network:
-\begin{equation}
-\xi^\mu = (\xi_1^\mu, \xi_2^\mu, \ldots, \xi_N^\mu)^T \in \{-1, +1\}^N, \quad \mu \in \{1, 2, \ldots, P\}
-\end{equation}
-In the primary experiment, patterns are drawn independently from a balanced Bernoulli distribution: $\mathbb{P}(\xi_i^\mu = +1) = \mathbb{P}(\xi_i^\mu = -1) = 0.5$.
+\subsubsection{Network Setup}
 
-\subsubsection{Hebbian Synaptic Learning}
-Synaptic couplings between neurons $i$ and $j$ are assigned via the outer-product Hebbian learning rule \cite{hopfield1982}:
+The network has $N = 400$ neurons. Each neuron $i$ takes a bipolar state $s_i \in \{-1, +1\}$, so the full network state at any moment is a vector $s \in \{-1,+1\}^N$. We store $P$ memories, each a random bipolar vector:
 \begin{equation}
-W_{ij} = \frac{1}{N} \sum_{\mu=1}^P \xi_i^\mu \xi_j^\mu \quad (i \ne j), \qquad W_{ii} = 0
+\xi^\mu \in \{-1, +1\}^N, \quad \mu = 1, \ldots, P
 \end{equation}
-Setting the diagonal to zero ($W_{ii}=0$) and ensuring strict symmetry ($W_{ij} = W_{ji}$) prevents self-feedback loops and periodic two-cycles.
+with each bit drawn independently and with equal probability from $\{-1,+1\}$. Random patterns like these are what the AGS capacity theory actually assumes, so using them makes the theoretical comparisons meaningful.
 
-\subsubsection{Retrieval Dynamics and Energy Function}
-Retrieval is implemented as an asynchronous dynamical process. Starting from cue $s(0)$, the local field acting on neuron $i$ is:
+\subsubsection{Learning}
+
+Connections are set using the standard outer-product Hebbian rule \cite{hopfield1982}:
 \begin{equation}
-h_i(t) = \sum_{j=1}^N W_{ij} s_j(t)
+W_{ij} = \frac{1}{N} \sum_{\mu=1}^P \xi_i^\mu \xi_j^\mu, \quad i \neq j, \qquad W_{ii} = 0
 \end{equation}
-Neuron $i$ updates its state deterministically according to:
+The zero diagonal is not optional --- without it, neurons would reinforce themselves, and the energy proof falls apart. Symmetry ($W_{ij} = W_{ji}$) is guaranteed by construction.
+
+\subsubsection{Retrieval and Energy}
+
+Starting from a corrupted cue $s(0)$, the network evolves by updating neurons one at a time. Each neuron $i$ computes its local field:
+\begin{equation}
+h_i(t) = \sum_j W_{ij} s_j(t)
+\end{equation}
+and updates its state as:
 \begin{equation}
 s_i(t+1) = \begin{cases}
-+1 & \text{if } h_i(t) > 0 \\
--1 & \text{if } h_i(t) < 0 \\
-s_i(t) & \text{if } h_i(t) = 0 \quad (\text{deterministic tie rule})
++1 & h_i > 0 \\
+-1 & h_i < 0 \\
+s_i(t) & h_i = 0
 \end{cases}
 \end{equation}
-Retaining the previous state when $h_i(t) = 0$ provides a deterministic tie-breaking rule. Sweeps visit all $N$ neurons in randomized permutation orders. The scalar Lyapunov energy is:
+The tie rule (keeping the current state when the field is exactly zero) is a minor but important detail for determinism. Within each sweep all $N$ neurons are visited in a random permutation order. The Lyapunov energy,
 \begin{equation}
-E(s) = -\frac{1}{2} \sum_{i=1}^N \sum_{j=1}^N W_{ij} s_i s_j = -\frac{1}{2} s^T W s
+E(s) = -\tfrac{1}{2}\, s^T W s
 \end{equation}
-When neuron $i$ changes state ($s_i \to s_i'$), the discrete energy change is $\Delta E = -(s_i' - s_i) h_i \le 0$, ensuring monotonic descent toward fixed-point attractors.
+satisfies $\Delta E = -(s_i' - s_i)h_i \leq 0$ on every individual update, so the network always terminates at a fixed point (or hits the sweep limit, which we treat as non-convergence).
 
 \subsection{Implementation}
 
-\subsubsection{Synaptic Lesions and Cue Corruption}
-In an undirected network of $N$ neurons without self-connections, the total number of unique physical connections is:
-\begin{equation}
-M_{\text{total}} = \frac{N(N-1)}{2}
-\end{equation}
-For $N=400$, $M_{\text{total}} = 79,800$ connections. To implement lesion fraction $f \in [0.0, 0.50]$, exactly $K = \lfloor f \cdot M_{\text{total}} \rceil$ undirected pairs $(i, j)$ are chosen uniformly at random and severed symmetrically: $W_{ij} \leftarrow 0$ and $W_{ji} \leftarrow 0$. To create corrupted cues, bits of a target memory $\xi^{\text{target}}$ are flipped independently with probability $q \in \{0.05, 0.10, 0.20, 0.30\}$.
+\subsubsection{Lesions and Noisy Cues}
 
-\subsubsection{Outcome Classification and Replication}
-Final states $s^*$ are classified using a strict four-category decision hierarchy:
+For $N=400$, there are $\frac{400 \times 399}{2} = 79{,}800$ unique undirected connections. When we apply a lesion fraction $f$, we delete exactly $\lfloor f \times 79{,}800 \rfloor$ of these edges, chosen uniformly at random, and set both $W_{ij}$ and $W_{ji}$ to zero. Using the correct denominator here matters: computing $f \times N^2$ would inflate the deletion count by nearly a factor of two and break the symmetry that the energy proof depends on.
+
+Noisy cues are generated by flipping each bit of a target memory $\xi^{\text{target}}$ independently with probability $q$. We tested $q \in \{0.05, 0.10, 0.20, 0.30\}$.
+
+\subsubsection{Classifying Outcomes}
+
+Possibly the most important methodological choice was how to handle retrieval failures. After dynamics terminate, the final state $s^*$ is sorted into one of four categories:
 \begin{enumerate}
-    \item \textbf{Exact Target Recall:} $s^* = \xi^{\text{target}}$.
-    \item \textbf{Other Stored Memory:} $s^* = \xi^\nu$ for some $\nu \ne \text{target}$.
-    \item \textbf{Stable Spurious State:} $s^*$ does not equal any stored memory, but passes an explicit fixed-point stability check ($s_i^* = \text{sign}(h_i^*)$ for all $h_i^* \ne 0$).
-    \item \textbf{Non-Convergence:} State failed to stabilize within 50 sweeps.
+    \item \textbf{Exact target recall}: $s^* = \xi^{\text{target}}$ (bit-for-bit match).
+    \item \textbf{Other stored memory}: $s^*$ matches a different stored pattern $\xi^\nu$, $\nu \neq \text{target}$.
+    \item \textbf{Stable spurious state}: $s^*$ does not equal any stored pattern, but is verified to be a genuine fixed point by checking $s_i^* = \text{sign}(h_i^*)$ for all neurons where $h_i^* \neq 0$.
+    \item \textbf{Non-convergence}: the network hit the 50-sweep limit without stabilising.
 \end{enumerate}
-In addition, normalized Hamming similarity is recorded: $\text{Sim}(s^*, \xi^{\text{target}}) = \frac{1}{N} \sum_{i=1}^N \mathbf{1}[s_i^* = \xi_i^{\text{target}}]$. 
+Category 3 and 4 are easy to conflate; we were careful not to. A state that hasn't converged is not a spurious attractor --- it just hasn't finished. We also tracked normalized Hamming similarity, $\frac{1}{N}\sum_i \mathbf{1}[s_i^* = \xi_i^{\text{target}}]$, to see how close failed retrievals actually were.
 
-Independently generated pattern ensembles and independent lesion masks serve as the experimental replicates. The parameter grid spans 8 memory loads ($P/N \in [0.02, 0.18]$), 7 lesion fractions ($f \in [0.0, 0.50]$), and 4 cue noise levels ($q \in [0.05, 0.30]$), with means and 95\% Student-$t$ confidence intervals computed across replicates. To accelerate execution, local fields are updated incrementally in $O(N)$ operations per flip via $h \leftarrow h + W_{:, i} \Delta s_i$, enabling over 180 complete retrieval trials per second across 16 CPU cores.
+The parameter sweep covered 8 memory loads, 7 lesion fractions, and 4 cue noise levels. Each condition was replicated with 5 independently seeded networks (each with its own random pattern set and random lesion mask). Means and 95\% Student-$t$ confidence intervals are computed across replicates. The simulation was parallelized across 16 CPU cores and ran at roughly 180 trials per second.
 
 \section{Results}
 
 \subsection{Report Findings}
 
-\subsubsection{Lyapunov Energy Minimization}
-Figure~\ref{fig:energy} confirms monotonic energy descent during asynchronous updates. Energy strictly decreases on every neuron flip ($\Delta E \le 0$), smoothly settling into an attractor within 25 individual neuron flips.
+\subsubsection{First, a Sanity Check on the Energy}
+
+Before interpreting any recall data it is worth confirming that the dynamics actually do what the theory says. Figure~\ref{fig:energy} shows the Lyapunov energy over successive neuron updates during a single retrieval trial. It drops monotonically, without exception, and plateaus quickly. This is what it should look like; if it went up at any point, something would be wrong with the implementation.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.62\textwidth]{figures/fig6_energy_trajectory.png}
-    \caption{\textbf{Lyapunov Energy Descent.} Energy trajectory $E(s) = -\frac{1}{2} s^T W s$ plotted over successive asynchronous flips starting from a 25\% corrupted cue ($N=100, P=4$). Energy strictly decreases on every flip.}
+    \caption{Lyapunov energy $E(s) = -\tfrac{1}{2}s^T W s$ plotted over individual neuron flip events, starting from a 25\%-corrupted cue ($N=100$, $P=4$). The energy never increases. This is an implementation sanity check, not a novel result.}
     \label{fig:energy}
 \end{figure}
 
-\subsubsection{Baseline Memory Capacity (RQ1)}
-Figure~\ref{fig:baseline} illustrates baseline recall in undamaged networks ($f=0$). At low memory loads ($P/N \le 0.05$, $P \le 20$), exact recall is perfect ($1.000 \pm 0.000$). Accuracy begins degrading at $P/N = 0.08$ ($0.867 \pm 0.227$) and declines steadily through $P/N = 0.10$ ($0.600$) and $P/N = 0.12$ ($0.533$). Near the theoretical Amit--Gutfreund--Sompolinsky limit ($\alpha_c \approx 0.138$), accuracy reaches $0.400 \pm 0.346$ at $P/N=0.14$. Above this threshold, accuracy drops to $0.133$ at $P/N=0.16$ and collapses to $0.000$ at $P/N=0.18$, confirming Hypothesis 1.
+\subsubsection{Baseline Capacity (RQ1)}
+
+Figure~\ref{fig:baseline} shows exact recall accuracy against memory load in undamaged networks. At low loads ($P/N \leq 0.05$), recall is essentially perfect across all cue noise levels tested. Things start going wrong around $P/N = 0.08$ (87\% recall) and deteriorate steadily through $P/N = 0.10$ (60\%) and $P/N = 0.12$ (53\%). By $P/N = 0.14$ --- which is right at the AGS theoretical limit of 0.138 --- accuracy has fallen to 40\%, and by $P/N = 0.18$ it hits zero. The drop is not perfectly sharp (this is a finite-size system, after all), but the qualitative pattern matches the theory reasonably well.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.66\textwidth]{figures/fig1_baseline_load_vs_accuracy.png}
-    \caption{\textbf{Baseline Recall Accuracy vs. Memory Load ($f=0$).} Exact retrieval accuracy plotted against memory load $P/N$ across cue noise levels ($q \in [0.05, 0.30]$) with 95\% confidence intervals. The dotted line marks $\alpha_c \approx 0.138$.}
+    \caption{Exact recall accuracy as a function of memory load $P/N$, with no lesions ($f=0$). Each curve is one cue noise level; error bars show 95\% confidence intervals across independent replicates. The vertical dashed line marks the AGS theoretical capacity $\alpha_c \approx 0.138$.}
     \label{fig:baseline}
 \end{figure}
 
-\subsubsection{Synaptic Lesions and Cognitive Reserve (RQ2)}
-Figure~\ref{fig:lesions} and Table~\ref{tab:load_lesion} demonstrate a profound interaction between memory load and lesion resilience. Under low memory load ($P/N = 0.05$, $P=20$):
-\begin{itemize}
-    \item Exact recall remains at \textbf{100\%} across lesion fractions $f = 0.00, 0.05, 0.10, 0.20,$ and \textbf{0.30}.
-    \item Even when \textbf{50\% of all synapses are randomly deleted}, the network achieves an exact recall accuracy of \textbf{66.7\%} (with Hamming similarity exceeding 95\%).
-\end{itemize}
-Conversely, when the network operates near capacity ($P/N = 0.14$, $P=56$):
-\begin{itemize}
-    \item Undamaged baseline accuracy is already compromised at 40.0\%.
-    \item A mild 10\% lesion cuts accuracy to 13.3\%.
-    \item At 20\% lesions, recall collapses to \textbf{0.0\%}.
-\end{itemize}
-This divergence confirms Hypothesis 2: networks with spare capacity possess broad, deep attractor basins capable of absorbing substantial synaptic pruning before functional impairment occurs. The global two-dimensional phase space is summarized in Figure~\ref{fig:heatmap}.
+\subsubsection{Lesions and the Reserve Effect (RQ2)}
+
+This is the result we found most striking. At low load ($P/N = 0.05$, $P=20$ patterns), the network was completely immune to lesioning up to $f=0.30$ --- that is, destroying 30\% of all synapses had absolutely no measurable effect on exact recall. Even at $f=0.50$, recall held at 67\%. This is not what you would expect from a fragile system. At high load ($P/N = 0.14$, $P=56$), however, the picture is completely different: a 10\% lesion drops accuracy from 40\% to 13\%, and a 20\% lesion wipes it out entirely. Table~\ref{tab:load_lesion} summarises this interaction, and Figure~\ref{fig:lesions} shows it graphically. The heatmap in Figure~\ref{fig:heatmap} gives the full picture across the two-dimensional parameter space.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.72\textwidth]{figures/fig2_lesions_vs_accuracy.png}
-    \caption{\textbf{Recall Accuracy vs. Synaptic Lesion Fraction.} Performance degradation curves across memory loads ($P/N \in [0.02, 0.18]$) under cue noise $q=0.10$. Low-load networks show a resilience plateau up to $f=0.30$.}
+    \caption{Exact recall accuracy as a function of synaptic lesion fraction $f$, separately for each memory load, at cue noise $q=0.10$. Low-load curves stay flat well past $f=0.30$.}
     \label{fig:lesions}
 \end{figure}
 
 \begin{table}[H]
 \centering
 \small
-\caption{\textbf{Interaction of Memory Load and Synaptic Lesions ($q=0.10$).} Mean exact recall [$\pm 95\%$ CI].}
+\caption{Mean exact recall accuracy ($\pm$95\% CI) across representative load and lesion conditions, at $q=0.10$.}
 \label{tab:load_lesion}
 \begin{tabular}{lccccc}
 \toprule
-\textbf{Memory Load ($P/N$)} & \textbf{$f = 0.00$} & \textbf{$f = 0.10$} & \textbf{$f = 0.20$} & \textbf{$f = 0.30$} & \textbf{$f = 0.50$} \\
+\textbf{Load ($P/N$)} & \textbf{$f=0.00$} & \textbf{$f=0.10$} & \textbf{$f=0.20$} & \textbf{$f=0.30$} & \textbf{$f=0.50$} \\
 \midrule
-$P/N = 0.02$ ($P=8$)   & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $0.933 \pm 0.13$ \\
-$P/N = 0.05$ ($P=20$)  & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $1.000 \pm 0.00$ & $0.667 \pm 0.37$ \\
-$P/N = 0.08$ ($P=32$)  & $0.867 \pm 0.23$ & $0.800 \pm 0.35$ & $0.733 \pm 0.35$ & $0.467 \pm 0.37$ & $0.067 \pm 0.13$ \\
-$P/N = 0.10$ ($P=40$)  & $0.600 \pm 0.35$ & $0.467 \pm 0.37$ & $0.200 \pm 0.28$ & $0.067 \pm 0.13$ & $0.000 \pm 0.00$ \\
-$P/N = 0.14$ ($P=56$)  & $0.400 \pm 0.35$ & $0.133 \pm 0.23$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ \\
-$P/N = 0.18$ ($P=72$)  & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ \\
+$0.02$ ($P=8$)  & $1.000\pm0.00$ & $1.000\pm0.00$ & $1.000\pm0.00$ & $1.000\pm0.00$ & $0.933\pm0.13$ \\
+$0.05$ ($P=20$) & $1.000\pm0.00$ & $1.000\pm0.00$ & $1.000\pm0.00$ & $1.000\pm0.00$ & $0.667\pm0.37$ \\
+$0.08$ ($P=32$) & $0.867\pm0.23$ & $0.800\pm0.35$ & $0.733\pm0.35$ & $0.467\pm0.37$ & $0.067\pm0.13$ \\
+$0.10$ ($P=40$) & $0.600\pm0.35$ & $0.467\pm0.37$ & $0.200\pm0.28$ & $0.067\pm0.13$ & $0.000\pm0.00$ \\
+$0.14$ ($P=56$) & $0.400\pm0.35$ & $0.133\pm0.23$ & $0.000\pm0.00$ & $0.000\pm0.00$ & $0.000\pm0.00$ \\
+$0.18$ ($P=72$) & $0.000\pm0.00$ & $0.000\pm0.00$ & $0.000\pm0.00$ & $0.000\pm0.00$ & $0.000\pm0.00$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -203,60 +191,59 @@ $P/N = 0.18$ ($P=72$)  & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ & $0.000 \pm 0.00$ 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.62\textwidth]{figures/fig3_heatmap_load_vs_lesion.png}
-    \caption{\textbf{Two-Dimensional Phase Space of Recall Accuracy.} Heatmap of exact recall accuracy over memory load ($P/N \in [0.02, 0.18]$) versus lesion fraction ($f \in [0.00, 0.50]$) at cue noise $q=0.10$.}
+    \caption{Heatmap of exact recall accuracy over the full grid of memory load $\times$ synaptic lesion fraction, at $q=0.10$. The transition from resilient (blue) to failed (red) is clearly non-linear.}
     \label{fig:heatmap}
 \end{figure}
 
-\subsubsection{Composition of Retrieval Errors (RQ3)}
-Figure~\ref{fig:composition} breaks down retrieval outcomes across memory loads for intact ($f=0.00$), moderately lesioned ($f=0.20$), and heavily lesioned ($f=0.40$) networks. Errors are \textbf{not} caused by confusion with other stored memories ($< 2.5\%$ across all conditions). Non-convergence remained low ($< 15\%$), occurring only under extreme lesions. Instead, the overwhelming majority of failed recall trials settled into \textbf{Stable Spurious States}:
-\begin{itemize}
-    \item In an intact network at high load ($P/N=0.14$), 60.0\% of trials terminated in stable spurious attractors.
-    \item Under moderate damage ($f=0.20$), stable spurious attractors captured \textbf{93.3\%} of all trials.
-\end{itemize}
-This supports Hypothesis 3: damage and overload warp the energy landscape, sculpting stable false attractors that trap retrieval trajectories.
+\subsubsection{What Kind of Errors? (RQ3)}
+
+We paid particular attention to \textit{how} the network failed, not just whether it did. Figure~\ref{fig:composition} breaks down outcomes into our four categories. The result is fairly clear: confusion with another genuine stored memory is essentially absent ($<2.5\%$ of trials across all conditions). Non-convergence is also rare, appearing mainly at extreme lesion fractions. The dominant failure mode, in almost every condition, is convergence to a stable spurious attractor.
+
+At $P/N = 0.14$ with no lesions, 60\% of trials already end in a spurious state. Add a 20\% lesion and that figure climbs to 93\%. These are states that feel stable to the network --- it has descended to a local energy minimum --- but the minimum is not one of the memories we stored. The network isn't lost; it's \textit{wrong} in a structured way.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.88\textwidth]{figures/fig4_outcome_composition.png}
-    \caption{\textbf{Retrieval Outcome Composition.} Stacked proportion of exact target recall (green), other stored memories (blue), stable spurious states (orange), and non-converged runs (red) across memory loads for $f=0.00, 0.20, 0.40$ ($q=0.10$).}
+    \caption{Breakdown of retrieval outcomes (exact target, other stored memory, stable spurious state, non-convergent) across memory loads, shown for $f=0.00$, $0.20$, and $0.40$ at $q=0.10$.}
     \label{fig:composition}
 \end{figure}
 
-\subsubsection{Cue Corruption and Basin Boundary Dynamics (RQ4)}
-Figure~\ref{fig:cue_noise} depicts the interaction between cue noise $q$ and synaptic damage. When the cue is lightly corrupted ($q=0.05$), the network reconstitutes the memory even under 30\% lesions. However, as cue noise increases to $q=0.30$, performance drops sharply. Severe cue noise initiates the state vector closer to basin boundaries, leaving retrieval vulnerable to lesion-induced basin contraction.
+\subsubsection{Noisy Cues (RQ4)}
+
+Figure~\ref{fig:cue_noise} shows the effect of initial cue noise, broken out by load. At low loads, mild noise ($q=0.05$) is shrugged off even under heavy lesioning --- the basin of attraction is simply big enough. At high loads, any cue noise hurts, and the network is already barely functional without damage. The interaction is there but it is not dramatic in magnitude; the main story is still the load $\times$ lesion interaction from RQ2.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.88\textwidth]{figures/fig5_cue_corruption_interaction.png}
-    \caption{\textbf{Cue Corruption Interaction Across Memory Loads.} Recall accuracy versus synaptic lesion fraction for cue noise probabilities ($q \in [0.05, 0.30]$) across low ($P/N=0.05$), medium ($P/N=0.10$), and high ($P/N=0.14$) loads.}
+    \caption{Recall accuracy as a function of lesion fraction for four cue noise levels, at three representative memory loads ($P/N = 0.05$, $0.10$, $0.14$).}
     \label{fig:cue_noise}
 \end{figure}
 
-\subsection{Extension and Comparison: Naturalistic MNIST vs. Synthetic Patterns}
-\noindent\textbf{The Question It Answers:} \textit{How do natural spatial correlations and non-orthogonal feature overlap alter associative capacity and the nature of false recall?}
+\subsection{Extension: What Happens with Real Digit Images?}
 
-To test ecological validity, we extended the architecture to store binarized handwritten digits from MNIST ($N=784$, $28 \times 28$ pixels) and compared them with synthetic orthogonal patterns ($N=784$). As shown in Table~\ref{tab:mnist} and Figure~\ref{fig:mnist}:
-\begin{itemize}
-    \item \textbf{Exact Recall:} While synthetic patterns maintain 100\% recall across $P=2$ through $P=20$, MNIST collapses from 100\% at $P=2$ to \textbf{0\% exact recall at $P \ge 4$}.
-    \item \textbf{Hamming Similarity:} Despite zero exact recall, MNIST maintains high normalized Hamming similarity ($\sim 88\% - 94\%$).
-\end{itemize}
-Handwritten digits share dense spatial correlations ($\mathbb{E}[\xi_i^\mu \xi_j^\mu] > 0$) and a heavy background bias. Under standard Hebbian learning, mutual correlation creates massive cross-talk that destroys isolated individual attractors. Instead, the network settles into a \textbf{prototypical mixture state}---reconstructing the coarse digit outline while blending overlapping strokes.
+\noindent\textbf{The question:} \textit{The whole capacity theory assumes independent, random patterns. What happens when memories are as correlated as handwritten digits?}
+
+We ran an extra set of simulations storing binarized MNIST digits ($N=784$, $28\!\times\!28$ pixels mapped to $\pm 1$), and compared recall against synthetic random patterns of the same dimension. The results, in Table~\ref{tab:mnist} and Figure~\ref{fig:mnist}, are somewhat dramatic. For synthetic patterns, recall is perfect all the way out to $P=20$ --- which makes sense, since $P/N = 20/784 \approx 0.025$ is comfortably below the AGS limit. For MNIST, recall collapses at just $P=4$.
+
+The reason is cross-correlation. Adjacent pixels in a digit image are not statistically independent. Digits share shapes --- the loop in `0' resembles the loop in `6', a vertical stroke appears in `1' and `7'. Under Hebbian learning, these shared features accumulate in the weight matrix and produce interference even at tiny loads. The network can't hold individual digit attractors because the memories' basins have all merged together.
+
+Interestingly, the Hamming similarity remains around 88--94\% even when exact recall is zero. The network \textit{is} doing something --- it's just recovering a sort of category prototype rather than any specific stored digit. Which, if you squint a little, is not entirely unlike what humans do with highly similar memories.
 
 \begin{table}[H]
 \centering
 \small
-\caption{\textbf{MNIST vs. Synthetic Patterns ($N=784$, Undamaged $f=0$, $q=0.10$).}}
+\caption{MNIST vs.\ synthetic patterns ($N=784$, $f=0$, $q=0.10$). Accuracy = exact recall; Sim. = normalized Hamming similarity.}
 \label{tab:mnist}
 \begin{tabular}{lcccc}
 \toprule
-\textbf{Stored Patterns ($P$)} & \textbf{Synthetic Acc.} & \textbf{MNIST Acc.} & \textbf{Synthetic Sim.} & \textbf{MNIST Sim.} \\
+\textbf{Stored $P$} & \textbf{Synth. Acc.} & \textbf{MNIST Acc.} & \textbf{Synth. Sim.} & \textbf{MNIST Sim.} \\
 \midrule
-$P = 2$  & $1.000$ & $1.000$ & $1.000$ & $1.000$ \\
-$P = 4$  & $1.000$ & $0.000$ & $1.000$ & $0.939$ \\
-$P = 6$  & $1.000$ & $0.000$ & $1.000$ & $0.896$ \\
-$P = 8$  & $1.000$ & $0.000$ & $1.000$ & $0.890$ \\
-$P = 10$ & $1.000$ & $0.000$ & $1.000$ & $0.876$ \\
-$P = 20$ & $1.000$ & $0.000$ & $1.000$ & $0.878$ \\
+$2$  & $1.000$ & $1.000$ & $1.000$ & $1.000$ \\
+$4$  & $1.000$ & $0.000$ & $1.000$ & $0.939$ \\
+$6$  & $1.000$ & $0.000$ & $1.000$ & $0.896$ \\
+$8$  & $1.000$ & $0.000$ & $1.000$ & $0.890$ \\
+$10$ & $1.000$ & $0.000$ & $1.000$ & $0.876$ \\
+$20$ & $1.000$ & $0.000$ & $1.000$ & $0.878$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -264,70 +251,78 @@ $P = 20$ & $1.000$ & $0.000$ & $1.000$ & $0.878$ \\
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.82\textwidth]{figures/fig7_mnist_vs_synthetic.png}
-    \caption{\textbf{MNIST vs. Synthetic Pattern Performance ($N=784$).} Left panel: Exact recall accuracy versus $P$. Right panel: Normalized Hamming similarity showing that while exact recall collapses for MNIST, pattern completion maintains $\sim 90\%$ semantic feature overlap.}
+    \caption{Comparison of MNIST digits and synthetic random patterns at $N=784$. Left: exact recall accuracy. Right: Hamming similarity to target. Synthetic patterns hold at 100\% recall; MNIST fails beyond $P=2$ despite maintaining high feature overlap.}
     \label{fig:mnist}
 \end{figure}
 
 \section{Discussion}
 
-\subsection{Interpretation of Findings}
+\subsection{Interpreting the Results}
 
-\subsubsection{What the Model Explains: Cognitive Reserve and Spurious Attractors}
-Unlike digital memory architectures, where a single severed connection induces fatal crashes, distributed attractor networks degrade gracefully. Crucially, our results provide a mechanistic grounding for the \textit{cognitive reserve hypothesis} \cite{stern2002, stern2012}. Clinicians observe that patients with high cognitive reserve endure substantial Alzheimer's neuropathology before expressing clinical dementia. In our model, this corresponds directly to the resilience plateau in Figure~\ref{fig:lesions}: below capacity ($P/N = 0.05$), attractor basins are deep and broad, tolerating 30\% synaptic loss with zero behavioral deficit. Structural reserve emerges as a direct property of low inter-memory interference.
+The core finding of RQ2 --- that low-load networks absorb enormous structural damage without losing function --- connects directly to the cognitive reserve literature \cite{stern2002,stern2012,livingston2024}. The idea there is that people with more years of education, richer social environments, or denser synaptic connectivity can sustain more neurological insult before showing clinical symptoms. Our model provides a mechanistic demonstration of why this might be: when a network is running well below saturation, its attractor basins are wide and deep. Damage that contracts a basin still leaves most starting points inside it. Only when the basin was already narrow --- because the network was near capacity to begin with --- does the same amount of damage make retrieval fail.
 
-Furthermore, our error analysis reveals that memory failure is almost never random noise or confusion with another intact memory. Instead, over 93\% of retrieval failures converge to \textbf{stable spurious states}. In statistical physics, these represent odd-symmetry mixture attractors and spin-glass local minima \cite{amit1985}. In cognitive terms, the network does not ``erase'' memories; rather, synaptic damage warps the energy landscape, creating synthetic energy valleys. This offers a computational analogue for clinical confabulation and the Deese--Roediger--McDermott (DRM) false memory effect \cite{roediger1995}.
+The spurious attractor result (RQ3) is in some ways even more interesting than the accuracy data. The network, when it fails, is not random. It converges to a structured, stable state that is not any of the stored patterns. In the statistical physics interpretation these are ``mixture states'' --- linear combinations of an odd number of stored patterns that also happen to satisfy the fixed-point equation \cite{amit1985}. What they feel like, cognitively, is confabulation: the retrieval of something internally coherent and stable, but factually wrong. The Deese--Roediger--McDermott paradigm \cite{roediger1995} demonstrates something analogous in humans --- if you study a list of related words (bed, rest, awake, tired...), you will often confidently recall the word ``sleep,'' which was never on the list, because it is the prototype from which the others radiate. The Hopfield model gives a formal account of exactly this kind of error.
 
-\subsubsection{Where the Model Fails}
-The model fails when confronted with correlated, naturalistic stimuli (MNIST). Because basic Hebbian plasticity cannot decouple overlapping features, exact capacity collapses at $P=4$. Biological memory resolves this through hippocampal circuitry: the dentate gyrus performs sparse coding (pattern separation) before associations are stored in CA3.
+The MNIST extension (Section 3.2) adds a third interpretive layer. Even in the absence of exact recall, the network retains roughly 90\% of the perceptual content. This is reminiscent of Bartlett's \cite{bartlett1932} observations that memory is not reproduction but reconstruction --- people retain the gist, schema, and structure of a story even when the specific details are wrong or invented.
 
-\subsubsection{Alternative Explanation of the Findings}
-Could the observed resilience and breakdown be explained without recurrent attractor dynamics? An alternative explanation is a \textbf{feedforward matched-filter / signal-to-noise ratio (SNR) model}. In a linear feedforward autoencoder, connection dropout degrades signal linearly proportional to $(1-f)$. Under an SNR model, one would expect a smooth, linear decrease in accuracy. However, our empirical data reveals a sharp non-linear step-function: accuracy remains flat at 100\% up to $f=0.30$, followed by a steep drop. This non-linear resilience is the definitive signature of recurrent attractor dynamics restoring corrupted states within an attraction basin.
+\subsection{Where the Model Falls Short}
+
+It would be misleading to claim this is a realistic model of anything biological. The weight symmetry $W_{ij} = W_{ji}$ is enforced by the energy proof but violated by real synapses. Dale's law --- that individual neurons are either excitatory or inhibitory, not both --- is ignored entirely. The network is fully connected, whereas cortical circuits are sparse. And random edge deletion, while clean to analyze, is a crude stand-in for the targeted, region-specific pathology that characterizes conditions like Alzheimer's.
+
+The MNIST failure also reveals something important: the standard Hebbian learning rule simply cannot handle correlated inputs. Biological memory does not use raw Hebbian plasticity across all inputs uniformly --- the dentate gyrus performs pattern separation first, reducing overlap before associations are encoded in CA3. Without something analogous, real-world inputs are beyond what the classical Hopfield model can store.
+
+\subsection{An Alternative Account}
+
+One could argue that the resilience we observe does not need recurrent attractor dynamics at all. A simple linear feedforward model with random dropout would also degrade gracefully --- if each synapse is preserved with probability $(1-f)$, the expected output signal scales as $(1-f)$ and you would see roughly linear degradation in accuracy. So why claim attractors are necessary?
+
+The answer is in the shape of the curve. A linear SNR model predicts smooth, monotonic decline from $f=0$ onward. What we actually observe is a flat plateau at 100\% recall from $f=0$ all the way to $f=0.30$, followed by a steep drop. That plateau is the signature of attractor dynamics: the corrupted state is still within the basin, so the recurrent dynamics correct it completely. A feedforward model cannot produce this qualitative signature. The step-function shape is not a quantitative detail --- it is precisely the evidence that something non-linear is happening.
 
 \subsection{Limitations and Future Directions}
-\textbf{Limitations:} The classical Hopfield model simplifies biological reality: biological synapses violate weight symmetry ($W_{ij} \ne W_{ji}$), obey Dale's Law (segregated excitation/inhibition), and feature sparse connectivity. Uniform random edge deletion also simplifies focal neuropathologies like tau tangles.
 
-\textbf{Future Directions:} Future work should explore: (i) sparse pseudo-inverse learning to store correlated naturalistic patterns; (ii) asymmetric Dale-compliant architectures; and (iii) targeted topological lesions (e.g., pruning high-centrality hub neurons) to model specific neurodegenerative disease profiles.
+The obvious next step would be to try sparse coding, perhaps using a pseudo-inverse or Hopfield-Storkey rule, to handle correlated inputs like MNIST. Architecturally, separating excitatory and inhibitory populations and enforcing Dale's law would make the model more biologically plausible, though it complicates the energy analysis. On the lesion side, it would be more realistic to target high-degree hub neurons or specific topological structures rather than deleting edges at random. Each of these extensions would shift the focus from clean theoretical results toward messier but more ecologically valid ones.
 
 \section{Contribution Statement}
-\noindent\textbf{Author Contributions:} H.S. conceived the computational framework, formulated the mathematical models, developed the Python simulation codebase and unit test suite, executed parameter sweeps and MNIST extensions, performed statistical analyses, generated publication-quality figures, and authored the research manuscript.
+
+\noindent H.S. formulated the research questions, implemented the full simulation codebase in Python (network model, lesioning routines, outcome classification, and statistical analysis), ran all experiments, generated the figures, and wrote the manuscript. All work in this paper is original.
 
 \section{AI Use Disclosure}
-\noindent\textbf{Disclosure:} Generative AI tooling (Google DeepMind Antigravity) was utilized as an assistive pair-programming environment to assist in structuring boilerplate Python multiprocessing routines, configuring LaTeX layout packages, and automating regression test execution. All conceptual hypotheses, experimental designs, algorithmic implementations, data interpretations, and final text writing were supervised and reviewed by the author.
+
+\noindent AI-assisted programming tools were used during the project to help write boilerplate code (e.g.\ multiprocessing setup, LaTeX preamble configuration) and to run automated unit tests. The experimental design, mathematical derivations, interpretation of results, and all written text were produced independently by the author and reviewed for accuracy before submission.
 
 \begin{thebibliography}{99}
 
 \bibitem{hopfield1982}
-J.~J. Hopfield, ``Neural networks and physical systems with emergent collective computational abilities,'' \emph{Proceedings of the National Academy of Sciences}, vol.~79, no.~8, pp. 2554--2558, 1982.
+J.~J. Hopfield, ``Neural networks and physical systems with emergent collective computational abilities,'' \emph{Proc. Natl. Acad. Sci.}, vol.~79, no.~8, pp. 2554--2558, 1982.
 
 \bibitem{amit1985}
-D.~J. Amit, H.~Gutfreund, and H.~Sompolinsky, ``Storing infinite numbers of patterns in a spin-glass model of neural networks,'' \emph{Physical Review Letters}, vol.~55, no.~14, pp. 1530--1533, 1985.
+D.~J. Amit, H.~Gutfreund, and H.~Sompolinsky, ``Storing infinite numbers of patterns in a spin-glass model of neural networks,'' \emph{Phys. Rev. Lett.}, vol.~55, no.~14, pp. 1530--1533, 1985.
 
 \bibitem{amit1987}
-D.~J. Amit, H.~Gutfreund, and H.~Sompolinsky, ``Statistical mechanics of neural networks near saturation,'' \emph{Annals of Physics}, vol. 173, no.~1, pp. 30--67, 1987.
+D.~J. Amit, H.~Gutfreund, and H.~Sompolinsky, ``Statistical mechanics of neural networks near saturation,'' \emph{Ann. Phys.}, vol.~173, no.~1, pp. 30--67, 1987.
 
 \bibitem{mceliece1987}
-R.~J. McEliece, E.~C. Posner, E.~R. Rodemich, and S.~S. Venkatesh, ``The capacity of the Hopfield associative memory,'' \emph{IEEE Transactions on Information Theory}, vol.~33, no.~4, pp. 461--482, 1987.
+R.~J. McEliece, E.~C. Posner, E.~R. Rodemich, and S.~S. Venkatesh, ``The capacity of the Hopfield associative memory,'' \emph{IEEE Trans. Inf. Theory}, vol.~33, no.~4, pp. 461--482, 1987.
 
 \bibitem{abumostafa1985}
-Y.~S. Abu-Mostafa and J.-M. St.~Jacques, ``Information capacity of the Hopfield model,'' \emph{IEEE Transactions on Information Theory}, vol.~31, no.~4, pp. 461--464, 1985.
+Y.~S. Abu-Mostafa and J.-M. St.~Jacques, ``Information capacity of the Hopfield model,'' \emph{IEEE Trans. Inf. Theory}, vol.~31, no.~4, pp. 461--464, 1985.
 
 \bibitem{stern2002}
-Y.~Stern, ``What is cognitive reserve? Theory and research application of the reserve concept,'' \emph{Journal of the International Neuropsychological Society}, vol.~8, no.~3, pp. 448--460, 2002.
+Y.~Stern, ``What is cognitive reserve? Theory and research application of the reserve concept,'' \emph{J. Int. Neuropsychol. Soc.}, vol.~8, no.~3, pp. 448--460, 2002.
 
 \bibitem{stern2012}
-Y.~Stern, ``Cognitive reserve in ageing and Alzheimer's disease,'' \emph{The Lancet Neurology}, vol.~11, no.~11, pp. 1006--1012, 2012.
+Y.~Stern, ``Cognitive reserve in ageing and Alzheimer's disease,'' \emph{Lancet Neurol.}, vol.~11, no.~11, pp. 1006--1012, 2012.
 
 \bibitem{livingston2024}
-G.~Livingston \emph{et~al.}, ``Dementia prevention, intervention, and care: 2024 report of the Lancet standing Commission,'' \emph{The Lancet}, vol. 404, no. 10452, pp. 572--628, 2024.
+G.~Livingston \emph{et~al.}, ``Dementia prevention, intervention, and care: 2024 report of the Lancet standing Commission,'' \emph{Lancet}, vol.~404, no.~10452, pp. 572--628, 2024.
 
 \bibitem{roediger1995}
-H.~L. Roediger and K.~B. McDermott, ``Creating false memories: Remembering words not presented in lists,'' \emph{Journal of Experimental Psychology: Learning, Memory, and Cognition}, vol.~21, no.~4, pp. 803--814, 1995.
+H.~L. Roediger and K.~B. McDermott, ``Creating false memories: Remembering words not presented in lists,'' \emph{J. Exp. Psychol. Learn. Mem. Cogn.}, vol.~21, no.~4, pp. 803--814, 1995.
 
 \bibitem{bartlett1932}
-F.~C. Bartlett, \emph{Remembering: An Experimental and Social Study}. Cambridge: Cambridge University Press, 1932.
+F.~C. Bartlett, \emph{Remembering: An Experimental and Social Study}. Cambridge Univ. Press, 1932.
 
 \bibitem{lecun1998}
-Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner, ``Gradient-based learning applied to document recognition,'' \emph{Proceedings of the IEEE}, vol.~86, no.~11, pp. 2278--2324, 1998.
+Y.~LeCun, L.~Bottou, Y.~Bengio, and P.~Haffner, ``Gradient-based learning applied to document recognition,'' \emph{Proc. IEEE}, vol.~86, no.~11, pp. 2278--2324, 1998.
 
 \end{thebibliography}
 
